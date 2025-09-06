@@ -1,0 +1,11 @@
+{
+    "version": "1.0.1",
+    "build": 2,
+    "description": "Voice Generation Application",
+    "features": [
+        "Voice generation with F5-TTS",
+        "Vietnamese language support",
+        "User-friendly interface",
+        "Background processing"
+    ]
+}

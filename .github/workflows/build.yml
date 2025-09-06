@@ -1,0 +1,151 @@
+name: Build and Release Voice App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 1.0.1)'
+        required: true
+        default: '1.0.1'
+      create_release:
+        description: 'Create GitHub Release'
+        type: boolean
+        required: false
+        default: true
+
+env:
+  APP_NAME: VoiceApp
+  PYTHON_VERSION: '3.10'
+  REPO_OWNER: nguyentruongduy1410
+  REPO_NAME: VoiceUpdate
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Get version
+      id: get_version
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" == "push" ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+    
+    - name: Update version.json
+      shell: bash
+      run: |
+        VERSION="${{ steps.get_version.outputs.VERSION }}"
+        python -c "
+        import json
+        import sys
+        import os
+        
+        version_file = 'version.json'
+        if os.path.exists(version_file):
+            with open(version_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            data = {}
+        
+        data['version'] = '$VERSION'
+        data['build'] = data.get('build', 0) + 1
+        
+        with open(version_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        print(f'Updated to version {data[\"version\"]} build {data[\"build\"]}')
+        "
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip pyinstaller
+        if (Test-Path requirements.txt) {
+          pip install -r requirements.txt
+        } else {
+          pip install PyQt5 requests
+        }
+    
+    - name: Create placeholder models
+      shell: bash
+      run: |
+        mkdir -p models/vocos_model models/whisper secure_models tts
+        echo "# Placeholder" > models/vocos_model/config.yaml
+        echo "# Placeholder" > models/vocos_model/pytorch_model.bin
+        echo "# Placeholder" > models/whisper/medium.pt
+        echo "# Placeholder" > secure_models/model.enc
+        echo "# Placeholder" > secure_models/vocab.enc
+        echo "# Placeholder" > tts/voice_sample.wav
+    
+    - name: Build EXE
+      shell: bash
+      run: |
+        if [ -f "build.spec" ]; then
+          pyinstaller --clean --noconfirm build.spec
+        else
+          pyinstaller --onefile --windowed \
+            --name "${{ env.APP_NAME }}" \
+            --add-data "models;models" \
+            --add-data "secure_models;secure_models" \
+            --add-data "tts;tts" \
+            --add-data "version.json;." \
+            main.py
+        fi
+    
+    - name: Create portable package
+      shell: bash
+      run: |
+        VERSION="${{ steps.get_version.outputs.VERSION }}"
+        mkdir -p release
+        cd dist
+        zip -r "../release/${{ env.APP_NAME }}_v${VERSION}_Portable.zip" .
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.APP_NAME }}-windows-build
+        path: release/
+    
+    - name: Create Release
+      if: github.event_name == 'push' || github.event.inputs.create_release == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.event_name == 'push' && github.ref_name || format('v{0}', steps.get_version.outputs.VERSION) }}
+        name: ${{ env.APP_NAME }} v${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## Voice Generation Application v${{ steps.get_version.outputs.VERSION }}
+          
+          ### Downloads
+          - Download the ZIP file, extract and run `${{ env.APP_NAME }}.exe`
+          
+          ### Features
+          - Voice generation with F5-TTS
+          - Vietnamese language support
+          - Auto-update functionality
+          
+          ### Requirements
+          - Windows 10/11 (64-bit)
+          - Internet connection for model downloads
+        files: release/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

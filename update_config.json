@@ -1,0 +1,20 @@
+{
+  "repository": {
+    "owner": "nguyentruongduy1410",
+    "name": "VoiceUpdate",
+    "url": "https://github.com/nguyentruongduy1410/VoiceUpdate.git",
+    "api_url": "https://api.github.com/repos/nguyentruongduy1410/VoiceUpdate"
+  },
+  "update_settings": {
+    "check_interval_hours": 6,
+    "auto_install": false,
+    "silent_mode": false,
+    "backup_before_update": true
+  },
+  "build_info": {
+    "app_name": "VoiceApp",
+    "executable_name": "VoiceApp.exe",
+    "company": "Thầy Lưu Hà",
+    "description": "Voice Generation Application"
+  }
+}

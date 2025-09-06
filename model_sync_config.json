@@ -1,0 +1,39 @@
+{
+  "models": {
+    "vocos_model": {
+      "url": "https://drive.google.com/file/d/YOUR_VOCOS_MODEL_FILE_ID/view",
+      "version": "1.0.0",
+      "type": "zip",
+      "destination": "models/vocos_model",
+      "files": ["config.yaml", "pytorch_model.bin"],
+      "hash": ""
+    },
+    "whisper_medium": {
+      "url": "https://drive.google.com/file/d/YOUR_WHISPER_MODEL_FILE_ID/view",
+      "version": "1.0.0", 
+      "type": "file",
+      "destination": "models/whisper",
+      "filename": "medium.pt",
+      "hash": ""
+    },
+    "secure_model": {
+      "url": "https://drive.google.com/file/d/YOUR_SECURE_MODEL_FILE_ID/view",
+      "version": "1.0.0",
+      "type": "file",
+      "destination": "secure_models",
+      "filename": "model.enc",
+      "hash": ""
+    },
+    "secure_vocab": {
+      "url": "https://drive.google.com/file/d/YOUR_SECURE_VOCAB_FILE_ID/view",
+      "version": "1.0.0",
+      "type": "file", 
+      "destination": "secure_models",
+      "filename": "vocab.enc",
+      "hash": ""
+    }
+  },
+  "check_interval_hours": 24,
+  "auto_update": true,
+  "backup_old_models": true
+}
